@@ -1,0 +1,186 @@
+<style><span data-mce-type="bookmark" style="display: inline-block; width: 0px; overflow: hidden; line-height: 0;" class="mce_SELRES_start">﻿</span><br />
+        .calculator-container {<br />            display: flex;<br />            justify-content: center;<br />            align-items: center;<br />            padding-top: 10px;<br />            padding-bottom: 10px;<br />            min-height: 100vh;<br />        }</p>
+<p>        .calculator {<br />            background-color: white;<br />            padding: 20px;<br />            border-radius: 12px;<br />            box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.1);<br />            width: 90%;<br />            max-width: 500px;<br />            text-align: center;<br />        }</p>
+<p>        .calculator h1 {<br />            font-size: 24px;<br />            margin-bottom: 20px;<br />        }</p>
+<p>        .calculator label {<br />            font-size: 16px;<br />            display: block;<br />            margin-bottom: 10px;<br />        }</p>
+<p>        .calculator input[type="number"],<br />        .calculator input[type="date"],<br />        .calculator select {<br />            padding: 10px;<br />            font-size: 16px;<br />            width: 100%;<br />            margin-bottom: 20px;<br />            border: 1px solid #ccc;<br />            border-radius: 6px;<br />        }</p>
+<p>        .calculator button {<br />            padding: 12px 20px;<br />            font-size: 16px;<br />            color: white;<br />            background-color: #007bff;<br />            border: none;<br />            border-radius: 6px;<br />            cursor: pointer;<br />            margin-top: 10px;<br />            width: 100%;<br />        }</p>
+<p>        .calculator button:hover {<br />            background-color: #0056b3;<br />        }</p>
+<p>        #results {<br />            margin-top: 20px;<br />            text-align: left;<br />        }</p>
+<p>        #results p {<br />            font-size: 16px;<br />            margin: 8px 0;<br />        }</p>
+<p>        #results span {<br />            font-weight: bold;<br />        }</p>
+<p>        .hidden {<br />            display: none;<br />        }</p>
+<p>        .resultados-container {<br />            display: grid;<br />            grid-template-columns: 1fr 1fr;<br />            gap: 15px;<br />        }</p>
+<p>        .resultado-box {<br />            background-color: #f0f0f0;<br />            padding: 10px;<br />            border-radius: 8px;<br />            text-align: center;<br />        }</p>
+<p>        .resultado-box p {<br />            margin: 5px 0;<br />        }</p>
+<p>        @media (max-width: 600px) {<br />            .calculator h1 {<br />                font-size: 20px;<br />            }</p>
+<p>            .calculator label, .calculator button {<br />                font-size: 14px;<br />            }</p>
+<p>            .resultados-container {<br />                grid-template-columns: 1fr;<br />            }<br />        }<br /></style>
+<div class="calculator-container">
+<div class="calculator">
+<h1>Calculadora de Pagos de Colegiatura</h1>
+<!-- Paso 1: Preguntar la fecha de depósito/pago/transferencia -->
+<div id="step1"><label for="fecha-calculo">¿Qué fecha realizarás el depósito, pago o transferencia? (aaaa-mm-dd)</label>
+<input id="fecha-calculo" name="fecha-calculo" required="" type="date" />
+<button type="button">Siguiente</button></div>
+<!-- Paso 2: Preguntar el monto a pagar -->
+<div id="step2" class="hidden"><label for="monto-pago">¿Cuál es el monto que vas a pagar? (Solo ingresa números)</label>
+<input id="monto-pago" min="1" name="monto-pago" required="" type="number" placeholder="0.00" />
+<button type="button">Siguiente</button></div>
+<!-- Paso 3: Preguntar los meses a pagar -->
+<div id="step3" class="hidden"><label for="meses-pago">Selecciona los meses que vas a pagar:</label>
+<select id="meses-pago" multiple="multiple" name="meses-pago" required="" size="12">
+<option value="01">Enero</option>
+<option value="02">Febrero</option>
+<option value="03">Marzo</option>
+<option value="04">Abril</option>
+<option value="05">Mayo</option>
+<option value="06">Junio</option>
+<option value="07">Julio</option>
+<option value="08">Agosto</option>
+<option value="09">Septiembre</option>
+<option value="10">Octubre</option>
+<option value="11">Noviembre</option>
+<option value="12">Diciembre</option>
+</select>
+<button type="button">Calcular</button></div>
+<!-- Resultados -->
+<div id="results" class="hidden">
+<h2>Resultados</h2>
+<div id="resultados" class="resultados-container"></div>
+<button type="button">Realizar Nuevo Cálculo</button>
+
+</div>
+</div>
+</div>
+<script>
+        function goToStep2() {
+            const fechaCalculo = document.getElementById('fecha-calculo').value;
+            if (!fechaCalculo) {
+                alert('Por favor, ingresa la fecha en que vas a realizar el pago.');
+                return;
+            }
+
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+        }
+
+        function goToStep3() {
+            const montoPago = document.getElementById('monto-pago').value;
+            if (!montoPago || montoPago <= 0) { alert('Por favor, ingresa un monto válido a pagar.'); return; } document.getElementById('step2').classList.add('hidden'); document.getElementById('step3').classList.remove('hidden'); } function calculatePayments() { const fechaCalculo = new Date(document.getElementById('fecha-calculo').value); const montoPago = parseFloat(document.getElementById('monto-pago').value); const mesesSeleccionados = Array.from(document.getElementById('meses-pago').selectedOptions).map(option => option.value);
+            let resultadosHTML = '';
+            let totalPagar = 0;
+
+            if (mesesSeleccionados.length === 0) {
+                alert('Por favor, selecciona al menos un mes a pagar.');
+                return;
+            }
+
+            mesesSeleccionados.forEach((mes) => {
+                let fechaCorte;
+                let recargo = 0;
+
+                if (mes === "01") {
+                    fechaCorte = new Date('2025-02-10'); // El recargo para enero comienza en febrero
+                    if (fechaCalculo > fechaCorte) {
+                        const diferenciaDias = Math.ceil((fechaCalculo - fechaCorte) / (1000 * 60 * 60 * 24));
+                        recargo = diferenciaDias * 1; // Q1 por día de mora
+                    }
+                } else if (mes === "07") {
+                    fechaCorte = new Date('2025-08-10'); // El recargo para julio comienza en agosto
+                    if (fechaCalculo > fechaCorte) {
+                        const diferenciaDias = Math.ceil((fechaCalculo - fechaCorte) / (1000 * 60 * 60 * 24));
+                        recargo = diferenciaDias * 1; // Q1 por día de mora
+                    }
+                } else {
+                    fechaCorte = new Date(`2025-${mes}-10`); // Fecha máxima de pago para otros meses
+                    if (fechaCalculo > fechaCorte) {
+                        const diferenciaDias = Math.ceil((fechaCalculo - fechaCorte) / (1000 * 60 * 60 * 24));
+                        recargo = diferenciaDias * 1; // Q1 por día de mora
+                    }
+                }
+
+                const total = montoPago + recargo;
+                totalPagar += total;
+
+                resultadosHTML += `
+                    </p>
+<p>
+</p>
+<div class="resultado-box">
+<p>
+                        </p>
+<p>
+</p>
+<p><strong>${mes}/2025</strong></p>
+<p>
+</p>
+<p>
+                        </p>
+<p>
+</p>
+<p>Cuota: Q${montoPago.toFixed(2)}</p>
+<p>
+</p>
+<p>
+                        </p>
+<p>
+</p>
+<p>Recargo: Q${recargo.toFixed(2)}</p>
+<p>
+</p>
+<p>
+                        </p>
+<p>
+</p>
+<p>Total: Q${total.toFixed(2)}</p>
+<p>
+</p>
+<p>
+                    </div>
+<p>
+</p>
+<p>
+                `;
+            });
+
+            resultadosHTML += `
+                </p>
+<p>
+</p>
+<div class="resultado-box">
+<p>
+                    </p>
+<p>
+</p>
+<p><strong>Total General a Pagar</strong></p>
+<p>
+</p>
+<p>
+                    </p>
+<p>
+</p>
+<p>Q${totalPagar.toFixed(2)}</p>
+<p>
+</p>
+<p>
+                </div>
+<p>
+</p>
+<p>
+            `;
+            document.getElementById('resultados').innerHTML = resultadosHTML;
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function resetCalculator() {
+            document.getElementById('fecha-calculo').value = '';
+            document.getElementById('monto-pago').value = '';
+            document.getElementById('meses-pago').selectedIndex = -1;
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+        }
+</script>

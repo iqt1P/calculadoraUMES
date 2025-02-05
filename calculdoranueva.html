@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Pagos de Colegiatura</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .calculator-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .calculator {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .calculator h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .calculator label {
+            font-size: 14px;
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .calculator input[type="number"],
+        .calculator input[type="date"],
+        .calculator select {
+            padding: 10px;
+            font-size: 14px;
+            width: 100%;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .calculator button {
+            padding: 10px;
+            font-size: 16px;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .calculator button:hover {
+            background-color: #218838;
+        }
+
+        #results {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .resultados-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .resultado-box {
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .resultado-box p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 600px) {
+            .calculator {
+                padding: 15px;
+            }
+
+            .calculator h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator-container">
+        <div class="calculator">
+            <h1>Calculadora de Pagos de Colegiatura</h1>
+            <div id="step1">
+                <label for="fecha-calculo">¿Qué fecha realizarás el depósito, pago o transferencia? (aaaa-mm-dd)</label>
+                <input id="fecha-calculo" name="fecha-calculo" type="date" required />
+                <button type="button" onclick="goToStep2()">Siguiente</button>
+            </div>
+
+            <div id="step2" class="hidden">
+                <label for="monto-pago">¿Cuál es el monto que vas a pagar? (Solo ingresa números)</label>
+                <input id="monto-pago" name="monto-pago" type="number" min="1" placeholder="0.00" required />
+                <button type="button" onclick="goToStep3()">Siguiente</button>
+            </div>
+
+            <div id="step3" class="hidden">
+                <label for="meses-pago">Selecciona los meses que vas a pagar:</label>
+                <select id="meses-pago" name="meses-pago" multiple size="12" required>
+                    <option value="01">Enero</option>
+                    <option value="02">Febrero</option>
+                    <option value="03">Marzo</option>
+                    <option value="04">Abril</option>
+                    <option value="05">Mayo</option>
+                    <option value="06">Junio</option>
+                    <option value="07">Julio</option>
+                    <option value="08">Agosto</option>
+                    <option value="09">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+                <button type="button" onclick="calculatePayments()">Calcular</button>
+            </div>
+
+            <div id="results" class="hidden">
+                <h2>Resultados</h2>
+                <div id="resultados" class="resultados-container"></div>
+                <button type="button" onclick="resetCalculator()">Realizar Nuevo Cálculo</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        function goToStep2() {
+            const fechaCalculo = document.getElementById('fecha-calculo').value;
+            if (!fechaCalculo) {
+                alert('Por favor, ingresa la fecha en que vas a realizar el pago.');
+                return;
+            }
+
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+        }
+
+        function goToStep3() {
+            const montoPago = document.getElementById('monto-pago').value;
+            if (!montoPago || montoPago <= 0) {
+                alert('Por favor, ingresa un monto válido a pagar.');
+                return;
+            }
+
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+        }
+
+        function calculatePayments() {
+            const fechaCalculo = new Date(document.getElementById('fecha-calculo').value);
+            const montoPago = parseFloat(document.getElementById('monto-pago').value);
+            const mesesSeleccionados = Array.from(document.getElementById('meses-pago').selectedOptions).map(option => option.value);
+            let resultadosHTML = '';
+            let totalPagar = 0;
+
+            if (mesesSeleccionados.length === 0) {
+                alert('Por favor, selecciona al menos un mes a pagar.');
+                return;
+            }
+
+            mesesSeleccionados.forEach((mes) => {
+                let fechaCorte;
+                let recargo = 0;
+                fechaCorte = new Date(`2025-${mes}-10`);
+
+                if (mes === "01") {
+                    fechaCorte = new Date('2025-02-10');
+                } else if (mes === "07") {
+                    fechaCorte = new Date('2025-08-10');
+                }
+
+                if (fechaCalculo > fechaCorte) {
+                    const diferenciaDias = Math.ceil((fechaCalculo - fechaCorte) / (1000 * 60 * 60 * 24));
+                    recargo = diferenciaDias * 1;
+                }
+
+                const totalMes = montoPago + recargo;
+                totalPagar += totalMes;
+
+                resultadosHTML += `
+                    <div class="resultado-box">
+                        <p><strong>Mes:</strong> ${mes}</p>
+                        <p><strong>Recargo:</strong> Q${recargo.toFixed(2)}</p>
+                        <p><strong>Total a pagar:</strong> Q${totalMes.toFixed(2)}</p>
+                    </div>
+                `;
+            });
+
+            resultadosHTML += `
+                <div class="resultado-box">
+                    <p><strong>Total General a Pagar:</strong></p>
+                    <p>Q${totalPagar.toFixed(2)}</p>
+                </div>
+            `;
+
+            document.getElementById('resultados').innerHTML = resultadosHTML;
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function resetCalculator() {
+            document.getElementById('fecha-calculo').value = '';
+            document.getElementById('monto-pago').value = '';
+            document.getElementById('meses-pago').selectedIndex = -1;
+            document.getElementById('step1').classList.remove('hidden');
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
